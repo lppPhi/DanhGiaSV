@@ -3,7 +3,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- URL GOOGLE APPS SCRIPT WEB APP ---
     // !!! QUAN TRỌNG: THAY THẾ URL DƯỚI ĐÂY BẰNG URL WEB APP THỰC TẾ CỦA BẠN SAU KHI TRIỂN KHAI Code.gs !!!
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzEXMYxxKwVDGvsZ26XSFhILVuUGRRGAjmvABHV692Oe5rld0jI1v1CXzJVJVxMrQce/exec'; // <<--- THAY URL CỦA BẠN
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_qNm9Sl6yh_Hk5t7AbgNUvn_06eQOXMfq-7Uaky1eYxvYZWH3ZmZLmWl-4IoicxV7sg/exec'; // <<--- THAY URL CỦA BẠN
 
     // --- DỮ LIỆU CÂU HỎI (Giữ nguyên từ trước, chỉ thu gọn) ---
     const theoryQuestionsData = [
