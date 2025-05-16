@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programming Aptitude Test</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="background-shapes">
+        <div class="shape shape1"></div>
+        <div class="shape shape2"></div>
+        <div class="shape shape3"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="header-icon"><i class="fas fa-laptop-code"></i></div>
+            <h1>PROGRAMMING APTITUDE TEST</h1>
+            <p class="subtitle">For Computer Science Students</p>
+        </header>
+
+        <!-- MỘT THẺ FORM DUY NHẤT BAO BỌC TẤT CẢ -->
+        <form id="assessment-form">
+            <section id="student-info" class="card">
+                <h2><i class="fas fa-user-graduate"></i> Student Information</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="student-name">Full Name:</label>
+                        <input type="text" id="student-name" name="fullName" placeholder="Nguyen Van A" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="student-id">Student ID:</label>
+                        <input type="text" id="student-id" name="studentID" placeholder="2020xxxx" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="student-school">School:</label>
+                        <input type="text" id="student-school" name="school" placeholder="University of Technology" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="student-major">Major:</label>
+                        <input type="text" id="student-major" name="major" placeholder="Computer Science" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="student-email">Email:</label>
+                        <input type="email" id="student-email" name="email" placeholder="nguyenvana@example.com" required>
+                    </div>
+                </div>
+            </section>
+
+            <section id="theory-questions" class="questions-section">
+                <h2>PART I: THEORY QUESTIONS (<span id="theory-q-count">0</span> questions)</h2>
+                <div id="theory-questions-container">
+                    <!-- Questions will be inserted here by JavaScript -->
+                </div>
+            </section>
+
+            <section id="practical-questions" class="questions-section">
+                <h2>PART II: PRACTICAL QUESTIONS (<span id="practical-q-count">0</span> questions)</h2>
+                <div id="practical-questions-container">
+                    <!-- Questions will be inserted here by JavaScript -->
+                </div>
+            </section>
+            
+            <div id="form-status-message" class="form-status"></div>
+
+            <button type="submit" class="submit-btn" id="submit-button">
+                <i class="fas fa-paper-plane"></i> 
+                <span id="submit-button-text">Submit Answers</span>
+                <span class="loader" id="submit-loader" style="display: none;"></span>
+            </button>
+        </form> <!-- FORM KẾT THÚC Ở ĐÂY (VÀ CHỈ CÓ MỘT THẺ NÀY) -->
+
+        <footer>
+            <p>© <span id="current-year">2024</span> - Test designed by AI & Frontend Developer</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
