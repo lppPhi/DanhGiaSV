@@ -2,7 +2,13 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // --- URL GOOGLE APPS SCRIPT WEB APP ---
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxkfJgTKLuhKJXG0QM7on15gIUy66_b7CkWY1PuxBintxN1msbGTsK0eyhduNqNbfY/exec'; // GIỮ NGUYÊN URL CỦA BẠN
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzE8bny0JONi-dX3Kv18eqE54tgWUabucFG8JhW9rxzmoWc9iVx36vlqkYDu7_l3zg/exec'; // GIỮ NGUYÊN URL CỦA BẠN
+
+    // --- GEMINI API CONFIGURATION (CLIENT-SIDE) ---
+    // !!!!! WARNING: EXPOSING API KEY IN CLIENT-SIDE CODE IS A SECURITY RISK !!!!!
+    // !!!!! FOR PRODUCTION, KEEP API KEY ON THE SERVER (LIKE GOOGLE APPS SCRIPT) !!!!!
+    const GEMINI_API_KEY_CLIENT = "AIzaSyCLPTpFTj55F_7GQI2eCUSnUk9thOiZ1iA"; // <<<<< THAY THẾ BẰNG API KEY CỦA BẠN
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY_CLIENT}`;
 
     // --- KHAI BÁO BIẾN ĐỂ LƯU DỮ LIỆU CÂU HỎI SAU KHI TẢI ---
     let theoryQuestionsData = [];
@@ -43,6 +49,107 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>`;
     }
 
+    // --- HÀM GỌI GEMINI API TỪ CLIENT-SIDE ---
+    async function getAIFeedbackFromClient(submissionData) {
+        if (!GEMINI_API_KEY_CLIENT || GEMINI_API_KEY_CLIENT === "YOUR_GEMINI_API_KEY_HERE") {
+            console.warn("Gemini API Key is not configured or is a placeholder on the client-side. Skipping AI evaluation.");
+            throw new Error("Client-side Gemini API Key not configured.");
+        }
+
+        const studentAnswers = submissionData.answers;
+        const questions = submissionData.questions;
+
+        let promptText = "Bạn là một trợ lý AI chuyên đánh giá bài kiểm tra năng lực lập trình. " +
+                        "Hãy xem xét toàn bộ bài làm của sinh viên (từ câu hỏi q1 đến q20) được cung cấp dưới đây.\n" +
+                        "Dựa trên tổng thể bài làm, hãy viết một ĐOẠN NHẬN XÉT TỔNG QUAN bằng TIẾNG VIỆT (3–5 câu, không quá 150 từ).\n" +
+                        "Nhận xét nên thể hiện tinh thần khích lệ, tập trung vào những điểm tích cực (nếu có) và những kỹ năng sinh viên có thể cải thiện để tiến bộ hơn. " +
+                        "Nếu bài làm chưa tốt, vui lòng tránh những từ ngữ mang tính chê trách; thay vào đó, hãy khuyến khích sinh viên cố gắng hơn trong những lần tới.\n" +
+                        "KHÔNG được sử dụng các tiêu đề như \"Phần 1:\", \"Phần 2:\" hay bất kỳ nhãn đánh dấu nào. Chỉ cung cấp đoạn văn nhận xét duy nhất.\n\n" +
+                        "SAU ĐOẠN NHẬN XÉT TỔNG QUAN, vui lòng thêm các thông tin sau cho mục đích nội bộ (dùng đúng định dạng):\n" +
+                        "INTERNAL_SCORE: [Điểm số ước tính/100] (Ví dụ: INTERNAL_SCORE: 75/100)\n" +
+                        "INTERNAL_DETAILED_FEEDBACK_FOR_ADMIN:\n[Bạn có thể trình bày nhận xét chi tiết hơn về từng câu hỏi hoặc đánh giá mở rộng cho quản trị viên. Phần này sẽ không hiển thị cho sinh viên.]\n\n" +
+                        "Dữ liệu bài làm của sinh viên:\n";
+
+        const questionKeys = Object.keys(studentAnswers).sort((a, b) => parseInt(a.substring(1)) - parseInt(b.substring(1)));
+        questionKeys.forEach(qKey => {
+            const questionText = (questions[qKey] || `Nội dung câu hỏi ${qKey.toUpperCase()} không có.`).replace(/<br\s*\/?>/gi, '\n');
+            const answerText = studentAnswers[qKey] || "Sinh viên không trả lời.";
+            promptText += `--- ${qKey.toUpperCase()} ---\nĐề bài: ${questionText}\nBài làm: ${answerText}\n\n`;
+        });
+
+        console.log("Prompt for Gemini (client-side):", promptText);
+
+        const payload = {
+            "contents": [{"parts": [{"text": promptText}]}],
+            "generationConfig": {"temperature": 0.6, "maxOutputTokens": 4096, "topP": 0.95, "topK": 40}
+        };
+
+        const response = await fetch(GEMINI_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.text();
+            throw new Error(`Gemini API request failed: ${response.status} ${response.statusText}. Body: ${errorBody}`);
+        }
+
+        const jsonResponse = await response.json();
+        console.log("Raw Gemini Output (client-side): \n", jsonResponse);
+
+        if (jsonResponse.candidates && jsonResponse.candidates[0] && jsonResponse.candidates[0].content && jsonResponse.candidates[0].content.parts && jsonResponse.candidates[0].content.parts[0].text) {
+            const rawGeminiOutput = jsonResponse.candidates[0].content.parts[0].text;
+
+            let overallSummaryForStudent = "Không thể trích xuất nhận xét tổng quan từ AI.";
+            let score = "N/A";
+            let fullFeedbackForAdmin = rawGeminiOutput;
+
+            const scoreMarker = "\nINTERNAL_SCORE:";
+            const detailMarker = "\nINTERNAL_DETAILED_FEEDBACK_FOR_ADMIN:";
+            const scoreIndex = rawGeminiOutput.indexOf(scoreMarker);
+            const detailIndex = rawGeminiOutput.indexOf(detailMarker);
+
+            if (scoreIndex !== -1) {
+                overallSummaryForStudent = rawGeminiOutput.substring(0, scoreIndex).trim();
+            } else if (detailIndex !== -1) {
+                overallSummaryForStudent = rawGeminiOutput.substring(0, detailIndex).trim();
+            } else {
+                const firstParagraphEnd = rawGeminiOutput.indexOf("\n\n");
+                if (firstParagraphEnd !== -1 && firstParagraphEnd < 500) {
+                     overallSummaryForStudent = rawGeminiOutput.substring(0, firstParagraphEnd).trim();
+                } else {
+                    overallSummaryForStudent = rawGeminiOutput.substring(0, Math.min(rawGeminiOutput.length, 500)).trim();
+                }
+            }
+            overallSummaryForStudent = overallSummaryForStudent.replace(/Phần \d+:/gi, "").trim();
+
+            if (scoreIndex !== -1) {
+                let scorePart = "";
+                if(detailIndex !== -1 && detailIndex > scoreIndex){
+                    scorePart = rawGeminiOutput.substring(scoreIndex + scoreMarker.length, detailIndex).trim();
+                } else {
+                    scorePart = rawGeminiOutput.substring(scoreIndex + scoreMarker.length).trim();
+                }
+                const scoreMatch = scorePart.match(/(\d+(\.\d+)?\s*\/\s*100)/i);
+                if (scoreMatch && scoreMatch[1]) { score = scoreMatch[1].trim(); }
+            }
+            // fullFeedbackForAdmin is already set to rawGeminiOutput
+
+            console.log("Client-side Extracted Overall Summary: " + overallSummaryForStudent);
+            console.log("Client-side Extracted Score: " + score);
+
+            return {
+                fullFeedbackForAdmin: fullFeedbackForAdmin,
+                overallSummaryForStudent: overallSummaryForStudent,
+                score: score
+            };
+        } else {
+            throw new Error("Gemini API response format unexpected.");
+        }
+    }
+
+
     // --- HÀM KHỞI TẠO FORM VÀ CÁC LISTENER SAU KHI DỮ LIỆU CÂU HỎI ĐÃ TẢI ---
     function initializeFormAndListeners() {
         document.getElementById('theory-q-count').textContent = theoryQuestionsData.length;
@@ -52,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (theoryContainer) { theoryQuestionsData.forEach(q => theoryContainer.innerHTML += createQuestionHTML(q)); }
         if (practicalContainer) { practicalQuestionsData.forEach(q => practicalContainer.innerHTML += createQuestionHTML(q)); }
 
-        if (assessmentForm) { // Chỉ thêm event listener nếu form tồn tại
+        if (assessmentForm) {
             assessmentForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 setSubmitState('loading', 'Đang xử lý và gửi bài...');
@@ -86,13 +193,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 const dataToSend = { studentInfo: {}, questions: {}, answers: {} };
                 studentFieldIds.forEach(fieldId => { const key = document.getElementById(fieldId).name; dataToSend.studentInfo[key] = formData.get(key) || ''; });
                 
-                // Sử dụng dữ liệu câu hỏi đã tải
                 const allQuestions = [...theoryQuestionsData, ...practicalQuestionsData];
                 allQuestions.forEach(q => { 
                     dataToSend.questions[q.name] = q.text; 
                     dataToSend.answers[q.name] = formData.get(q.name) || ""; 
                 });
-                console.log("Data to send (script.js):", JSON.stringify(dataToSend, null, 2));
+                
+                // --- GET AI FEEDBACK FROM CLIENT-SIDE ---
+                let aiEvaluationResult = {
+                    fullFeedbackForAdmin: "AI evaluation was not performed or failed on client.",
+                    overallSummaryForStudent: "An overall summary is currently unavailable (client-side issue or API key not set).",
+                    score: "N/A"
+                };
+
+                if (GEMINI_API_KEY_CLIENT && GEMINI_API_KEY_CLIENT !== "YOUR_GEMINI_API_KEY_HERE") {
+                    try {
+                        setSubmitState('loading', 'Đang tạo nhận xét AI...');
+                        aiEvaluationResult = await getAIFeedbackFromClient(dataToSend);
+                        setSubmitState('loading', 'Đang gửi bài và nhận xét AI...');
+                    } catch (aiError) {
+                        console.error('Error getting AI feedback from client:', aiError);
+                        // Display AI error to user, but still proceed to submit data to Apps Script
+                        displayFormStatus(`Lỗi khi tạo nhận xét AI: ${aiError.message}. Bài làm vẫn sẽ được nộp.`, 'warning');
+                        aiEvaluationResult.overallSummaryForStudent = `Lỗi khi tạo nhận xét AI: ${aiError.message}.`;
+                        // The form will still be submitted, Apps Script will log this.
+                        setSubmitState('loading', 'Đang gửi bài (AI lỗi)...');
+                    }
+                } else {
+                    displayFormStatus('Cảnh báo: Gemini API Key chưa được cấu hình phía client. Nhận xét AI sẽ không được tạo.', 'warning');
+                     setSubmitState('loading', 'Đang gửi bài (không có AI)...');
+                }
+                
+                dataToSend.aiEvaluation = aiEvaluationResult; // Add AI results to the data sent to Apps Script
+                console.log("Data to send (script.js with AI eval):", JSON.stringify(dataToSend, null, 2));
+
 
                 if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("YOUR_ACTUAL_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE") || !GOOGLE_SCRIPT_URL.endsWith("/exec")) {
                     displayFormStatus('Lỗi cấu hình: URL Google Apps Script không hợp lệ.', 'error');
@@ -111,11 +245,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     const result = await response.json(); 
 
-                    if (result.status === "success" || result.status === "partial_success") { // Chấp nhận cả partial_success
+                    if (result.status === "success" || result.status === "partial_success") {
                         displayFormStatus(result.message || 'Nộp bài thành công! Email chứa phản hồi tổng quan đã được gửi.', 'success');
                         assessmentForm.reset();
                         studentFieldIds.forEach(id => { const field = document.getElementById(id); if (field) field.style.borderColor = '#ddd'; });
 
+                        // Display AI feedback (which now comes from client-side call, passed through Apps Script response)
                         if (aiFeedbackContainer && result.aiOverallSummary) { 
                             aiFeedbackContainer.innerHTML = `<h3><i class="fas fa-comment-dots"></i> Nhận Xét Tổng Quan từ AI:</h3>
                                                          <div class="ai-feedback-content">${result.aiOverallSummary.replace(/\n/g, '<br>')}</div>
@@ -131,14 +266,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         console.error('Logic error from Apps Script (script.js):', result.message);
                         let clientMessage = `Lỗi từ server: ${result.message || 'Phản hồi không thành công.'}. Vui lòng thử lại.`;
-                        if (result.aiOverallSummary && result.aiOverallSummary.startsWith("Error during AI")) { // Hiển thị lỗi chi tiết từ AI nếu có
+                        // If Apps Script forwards an AI error message (e.g., client sent an error)
+                        if (result.aiOverallSummary && result.aiOverallSummary.startsWith("Lỗi khi tạo nhận xét AI")) { 
                             clientMessage = result.aiOverallSummary;
                         }
                         displayFormStatus(clientMessage, 'error');
                         if (aiFeedbackContainer) aiFeedbackContainer.style.display = 'none';
                     }
                 } catch (error) {
-                    console.error('Fetch or response processing error (script.js):', error);
+                    console.error('Fetch or response processing error (script.js to Apps Script):', error);
                     displayFormStatus(`${error.message || 'Lỗi kết nối hoặc xử lý.'}. Kiểm tra mạng và thử lại.`, 'error');
                     if (aiFeedbackContainer) aiFeedbackContainer.style.display = 'none';
                 }
@@ -164,20 +300,19 @@ document.addEventListener('DOMContentLoaded', function() {
             theoryQuestionsData = data.theoryQuestionsData || [];
             practicalQuestionsData = data.practicalQuestionsData || [];
             console.log("Questions data loaded successfully.");
-            initializeFormAndListeners(); // Gọi hàm khởi tạo sau khi dữ liệu đã tải
+            initializeFormAndListeners(); 
         })
         .catch(error => {
             console.error('Error loading questions data:', error);
-            if (formStatusMessage) { // Hiển thị lỗi cho người dùng nếu không tải được câu hỏi
+            if (formStatusMessage) { 
                 displayFormStatus('Không thể tải dữ liệu câu hỏi. Vui lòng thử làm mới trang.', 'error');
             }
-            // Có thể ẩn form hoặc các phần phụ thuộc vào câu hỏi ở đây nếu muốn
             if(assessmentForm) assessmentForm.style.display = 'none';
         });
 
-    // --- CÁC HÀM HELPER (GIỮ NGUYÊN) ---
+    // --- CÁC HÀM HELPER (GIỮ NGUYÊN PHẦN LỚN) ---
     function setSubmitState(state, text) {
-        if (submitButton && submitButtonText && submitLoader) { // Kiểm tra sự tồn tại của element
+        if (submitButton && submitButtonText && submitLoader) {
             if (state === 'loading') {
                 submitButton.disabled = true; submitButtonText.textContent = text; submitLoader.style.display = 'inline-block';
             } else {
@@ -186,8 +321,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     function displayFormStatus(message, type) {
-        if (formStatusMessage) { // Kiểm tra sự tồn tại
+        if (formStatusMessage) { 
             formStatusMessage.textContent = message; formStatusMessage.className = `form-status ${type}`; formStatusMessage.style.display = 'block';
+            if (type === 'error' || type === 'warning') {
+                formStatusMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     }
     function validateEmail(email) {
@@ -211,17 +349,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function initializeIntersectionObserver() {
         const animatedElements = document.querySelectorAll('.question-block, .card:not(.question-block)');
-        if (animatedElements.length > 0 && typeof IntersectionObserver !== 'undefined') { // Kiểm tra IntersectionObserver có được hỗ trợ không
+        if (animatedElements.length > 0 && typeof IntersectionObserver !== 'undefined') { 
             const observer = new IntersectionObserver((entries, observerInstance) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) { entry.target.classList.add('visible'); observerInstance.unobserve(entry.target); }
                 });
             }, { threshold: 0.05, rootMargin: '0px 0px -30px 0px' });
             animatedElements.forEach(el => observer.observe(el));
-        } else if (animatedElements.length > 0) { // Fallback nếu IntersectionObserver không được hỗ trợ
+        } else if (animatedElements.length > 0) { 
             animatedElements.forEach(el => el.classList.add('visible'));
         }
     }
-    // Không gọi initializeIntersectionObserver ở đây nữa, nó sẽ được gọi trong initializeFormAndListeners
 });
 // --- END OF FILE script.js ---
