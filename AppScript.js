@@ -1,3 +1,6 @@
+// FILE: Code.gs (Google Apps Script)
+
+// --- CONFIGURATION --- (Giữ nguyên)
 const ADMIN_EMAIL = "lpphi.1701@gmail.com";
 const SPREADSHEET_ID = "1_YsKUUuEPBrFk8sswmBkPHbw-S3ySShhz11toEZoZwU";
 const SHEET_NAME = "De3";
@@ -107,14 +110,16 @@ function evaluateWithGemini(submissionData) {
 
   // >>> PROMPT ĐƯỢC CẬP NHẬT ĐỂ YÊU CẦU TIẾNG VIỆT VÀ CHỈ NHẬN XÉT TỔNG QUAN <<<
   let promptText = "Bạn là một trợ lý AI chuyên đánh giá bài kiểm tra năng lực lập trình. " +
-                   "Hãy xem xét toàn bộ bài làm của sinh viên (từ câu hỏi q1 đến q20) được cung cấp dưới đây.\n" +
-                   "Dựa trên tổng thể bài làm, hãy viết một ĐOẠN NHẬN XÉT TỔNG QUAN bằng TIẾNG VIỆT (khoảng 3-5 câu văn, không quá 150 từ). " +
-                   "Nhận xét này cần tập trung vào chất lượng chung, những điểm mạnh (nếu có), và những lĩnh vực chính mà sinh viên cần cải thiện. " +
-                   "KHÔNG được ghi \"Phần 1:\", \"Phần 2:\" hay bất kỳ nhãn đánh dấu phần nào trong đoạn nhận xét này. Chỉ cung cấp duy nhất đoạn văn bản nhận xét tổng quan.\n\n" +
-                   "SAU ĐOẠN NHẬN XÉT TỔNG QUAN, vui lòng thêm các thông tin sau cho mục đích nội bộ (sử dụng các tiền tố chính xác này):\n" +
-                   "INTERNAL_SCORE: [Điểm số ước tính/100] (Ví dụ: INTERNAL_SCORE: 75/100)\n" +
-                   "INTERNAL_DETAILED_FEEDBACK_FOR_ADMIN:\n[Bắt đầu từ đây, bạn có thể cung cấp nhận xét chi tiết hơn về từng câu hỏi nếu muốn, hoặc một bản tóm tắt dài hơn cho quản trị viên. Phần này không hiển thị cho sinh viên.]\n\n" +
-                   "Dữ liệu bài làm của sinh viên:\n";
+                  "Hãy xem xét toàn bộ bài làm của sinh viên (từ câu hỏi q1 đến q20) được cung cấp dưới đây.\n" +
+                  "Dựa trên tổng thể bài làm, hãy viết một ĐOẠN NHẬN XÉT TỔNG QUAN bằng TIẾNG VIỆT (3–5 câu, không quá 150 từ).\n" +
+                  "Nhận xét nên thể hiện tinh thần khích lệ, tập trung vào những điểm tích cực (nếu có) và những kỹ năng sinh viên có thể cải thiện để tiến bộ hơn. " +
+                  "Nếu bài làm chưa tốt, vui lòng tránh những từ ngữ mang tính chê trách; thay vào đó, hãy khuyến khích sinh viên cố gắng hơn trong những lần tới.\n" +
+                  "KHÔNG được sử dụng các tiêu đề như \"Phần 1:\", \"Phần 2:\" hay bất kỳ nhãn đánh dấu nào. Chỉ cung cấp đoạn văn nhận xét duy nhất.\n\n" +
+                  "SAU ĐOẠN NHẬN XÉT TỔNG QUAN, vui lòng thêm các thông tin sau cho mục đích nội bộ (dùng đúng định dạng):\n" +
+                  "INTERNAL_SCORE: [Điểm số ước tính/100] (Ví dụ: INTERNAL_SCORE: 75/100)\n" +
+                  "INTERNAL_DETAILED_FEEDBACK_FOR_ADMIN:\n[Bạn có thể trình bày nhận xét chi tiết hơn về từng câu hỏi hoặc đánh giá mở rộng cho quản trị viên. Phần này sẽ không hiển thị cho sinh viên.]\n\n" +
+                  "Dữ liệu bài làm của sinh viên:\n";
+
 
   const questionKeys = Object.keys(studentAnswers).sort((a, b) => parseInt(a.substring(1)) - parseInt(b.substring(1)));
   questionKeys.forEach(qKey => {
