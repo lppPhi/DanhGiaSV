@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // --- URL GOOGLE APPS SCRIPT WEB APP ---
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzozOC2QaGgoKEy4VMHGJiCUKZ_vydUzV--yhJmFC4HN1FUbQXdJkpT3WglNqMbxT_LyA/exec'; // GIỮ NGUYÊN URL CỦA BẠN
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxjw06rOtAh6hUpWJt6UKWdDP3ZepUf7mss7FPxci2vnOXsg-R2rYQxq_L00oFLRlw/exec'; // GIỮ NGUYÊN URL CỦA BẠN
 
     // --- KHAI BÁO BIẾN ĐỂ LƯU DỮ LIỆU CÂU HỎI SAU KHI TẢI ---
     let theoryQuestionsData = [];
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitLoader = document.getElementById('submit-loader');
     const formStatusMessage = document.getElementById('form-status-message');
     const aiFeedbackContainer = document.getElementById('ai-feedback-container');
-    const studentFieldIds = ['student-name', 'student-id', 'student-school', 'student-major', 'student-email'];
+    const studentFieldIds = ['student-name', 'student-id', 'student-school', 'student-major', 'student-email', 'student-phone','student-studentyear'];
 
     // --- HÀM TẠO HTML CHO CÂU HỎI (GIỮ NGUYÊN) ---
     function createQuestionHTML(question) {
