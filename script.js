@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // --- URL GOOGLE APPS SCRIPT WEB APP ---
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxFzvaERLwnT3VXt6JwuxjgMV5m1KIN3jZCLSOMbG2c6imnHq2TDksdz-LYN0bLw1ZM/exec'; // GIỮ NGUYÊN URL CỦA BẠN
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSUMVr9vU-fFK1z3zoc_u8kAwK6D_nEDd3GcbsfsKeoor8kzPPMavPRIFefmBoQoJP/exec'; // GIỮ NGUYÊN URL CỦA BẠN
 
     // --- GEMINI API CONFIGURATION (CLIENT-SIDE) ---
     // !!!!! WARNING: EXPOSING API KEY IN CLIENT-SIDE CODE IS A SECURITY RISK !!!!!
