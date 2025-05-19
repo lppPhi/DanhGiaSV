@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // --- URL GOOGLE APPS SCRIPT WEB APP ---
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxNxTffWvVV2MsaMjf-GMmT0agYdF61_eofO5fWFqvAriky1Jr6UfSAXBjGrN2EJFv4Jg/exec'; // GIỮ NGUYÊN URL CỦA BẠN
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzozOC2QaGgoKEy4VMHGJiCUKZ_vydUzV--yhJmFC4HN1FUbQXdJkpT3WglNqMbxT_LyA/exec'; // GIỮ NGUYÊN URL CỦA BẠN
 
     // --- KHAI BÁO BIẾN ĐỂ LƯU DỮ LIỆU CÂU HỎI SAU KHI TẢI ---
     let theoryQuestionsData = [];
